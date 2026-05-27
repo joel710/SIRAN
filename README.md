@@ -1,7 +1,7 @@
 
 ---
 
-```markdown
+
 # EchoGuard
 
 Advanced, ultra-lightweight on-device computer vision engine purpose-built for real-time NSFW detection and non-consensual explicit content prevention.
