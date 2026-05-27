@@ -139,4 +139,4 @@ This project is licensed under the Apache License 2.0 - see the LICENSE file for
 <Elicitation label="Rédiger le fichier LICENSE Apache 2.0" query="Genere le texte complet du fichier LICENSE Apache 2.0" />
 </ElicitationsGroup>
 
-```
+
