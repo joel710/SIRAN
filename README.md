@@ -132,7 +132,7 @@ This project is licensed under the Apache License 2.0 - see the LICENSE file for
 
 ```
 
----
+
 <ElicitationsGroup message="Que souhaitez-vous faire maintenant ?">
 <Elicitation label="Générer le script Python d'entraînement complet" query="Fais le script python complet core/train.py avec la data augmentation colorjitter pour mobilenetv3" />
 <Elicitation label="Créer le script de conversion et quantification TFLite" query="Ecris le script export/convert_to_tflite.py pour quantifier le modele en INT8" />
