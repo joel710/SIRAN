@@ -2,15 +2,15 @@
 ---
 
 
-# EchoGuard
+# Siran
 
 Advanced, ultra-lightweight on-device computer vision engine purpose-built for real-time NSFW detection and non-consensual explicit content prevention.
 
 ## Overview
 
-EchoGuard is the core content moderation subsystem developed for the Echo social network. Engineered specifically for high-efficiency deployment in resource-constrained environments, it utilizes an optimized MobileNetV3 architecture to intercept and analyze explicit imagery before server ingestion. 
+Siran is the core content moderation subsystem developed for the Echo social network. Engineered specifically for high-efficiency deployment in resource-constrained environments, it utilizes an optimized MobileNetV3 architecture to intercept and analyze explicit imagery before server ingestion. 
 
-A primary engineering objective of EchoGuard is demographic equity. Through targeted dataset balancing and aggressive color-space augmentation, the model mitigates historical algorithmic biases associated with dark skin tones, ensuring uniform precision across diverse human phenotypes.
+A primary engineering objective of Siran is demographic equity. Through targeted dataset balancing and aggressive color-space augmentation, the model mitigates historical algorithmic biases associated with dark skin tones, ensuring uniform precision across diverse human phenotypes.
 
 ### Key Architectural Pillars
 
@@ -75,8 +75,8 @@ SIRAN resolves this through a two-pronged training methodology:
 Clone the repository and install the required dependencies within a virtual environment:
 
 ```bash
-git clone [https://github.com/your-organization/echoguard.git](https://github.com/your-organization/echoguard.git)
-cd echoguard
+git clone [https://github.com/your-organization/Siran.git](https://github.com/your-organization/Siran.git)
+cd Siran
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -105,7 +105,7 @@ To compile the trained PyTorch weights into an optimized, 8-bit quantized Tensor
 python export/convert_to_tflite.py \
   --checkpoint ./models/checkpoints/best_model.pt \
   --optimize size \
-  --output ./export/echoguard_v1.tflite
+  --output ./export/Siran_v1.tflite
 
 ```
 
