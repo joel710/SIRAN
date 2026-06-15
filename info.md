@@ -1,84 +1,84 @@
-# SIRAN - Training Data Strategy & Bias Mitigation Reference
+# SIRAN - Stratégie de données d'entrainement et correction de biais
 
-## Objective
+## Objectif
 
-Correct demographic bias in the MobileNetV3 classifier to ensure uniform detection accuracy across all skin tones, with particular emphasis on dark-skinned populations representative of the Echo user base in West Africa.
+Corriger le biais démographique du classifieur MobileNetV3 pour garantir une précision de détection uniforme sur toutes les carnations, avec un accent particulier sur les populations à peau foncée représentatives de la base utilisateurs d'Echo en Afrique de l'Ouest.
 
-The approach combines a large-scale generalist NSFW dataset for foundational nudity detection with targeted diversity datasets to eliminate false positives correlated with melanin density.
+L'approche combine un dataset NSFW généraliste à grande échelle pour la détection fondamentale de nudité, avec des datasets de diversité ciblés pour éliminer les faux positifs corrélés à la densité de mélanine.
 
 ---
 
-## 1. Diversity Datasets (Bias Correction)
+## 1. Datasets de diversité (correction de biais)
 
-These datasets serve to calibrate the model's Safe-For-Work (SFW) boundary, ensuring that dark skin tones, low-light environments, and high-contrast shadows are not erroneously classified as explicit content.
+Ces datasets servent à calibrer la frontière Safe-For-Work (SFW) du modèle, en s'assurant que les peaux foncées, les environnements à faible luminosité et les ombres à fort contraste ne sont pas classifiés à tort comme contenu explicite.
 
 ### Casual Conversations v2 (Meta AI)
 
-- **Description:** Large-scale dataset created specifically for AI bias correction. Contains video and image data of individuals across all geographic origins, annotated with Fitzpatrick skin type classifications. Dark skin tones are heavily represented.
-- **Source:** Meta AI Research (open-source)
+- **Description :** Dataset à grande échelle créé spécifiquement pour la correction de biais en IA. Contient des données vidéo et image de personnes de toutes origines géographiques, annotées selon l'échelle de Fitzpatrick. Les carnations foncées y sont massivement représentées.
+- **Source :** Meta AI Research (open-source)
 
 ### FairFace Dataset
 
-- **Description:** Face image dataset explicitly balanced for ethnic diversity (Black, White, Latino, Asian, Indian, Middle Eastern).
-- **Application:** Trains the classifier to recognize that dark-skinned faces and necks in low-light environments (e.g., dimly lit rooms) constitute safe content.
-- **Source:** Hugging Face / GitHub
+- **Description :** Dataset d'images de visages explicitement équilibré pour la diversité ethnique (Black, White, Latino, Asian, Indian, Middle Eastern).
+- **Application :** Entraine le classifieur à reconnaitre que les visages et cous à peau foncée dans des environnements à faible luminosité (ex : chambre peu éclairée) constituent du contenu safe.
+- **Source :** Hugging Face / GitHub
 
 ### Diversity in Faces (DiF) Dataset (IBM)
 
-- **Description:** Multi-million image dataset focused on diversity of human traits and melanin distribution.
-- **Source:** IBM Research
+- **Description :** Dataset de plusieurs millions d'images axé sur la diversité des traits humains et de la distribution de mélanine.
+- **Source :** IBM Research
 
 ---
 
-## 2. Explicit Content Datasets (NSFW)
+## 2. Datasets de contenu explicite (NSFW)
 
-These datasets provide the foundational training signal for anatomical nudity detection: body geometry, exposed anatomical regions, and pose classification.
+Ces datasets fournissent le signal d'entrainement fondamental pour la détection de nudité anatomique : géométrie corporelle, zones anatomiques exposées et classification de poses.
 
 ### deepghs/nsfw_detect
 
-- **Description:** Actively maintained image classification dataset suitable for direct fine-tuning.
-- **Source:** Hugging Face Datasets
+- **Description :** Dataset de classification d'images activement maintenu, adapté au fine-tuning direct.
+- **Source :** Hugging Face Datasets
 
 ### DarkyMan/nsfw-image-classification
 
-- **Description:** Multi-class image dataset (Sexy, Porn, Neutral). The "Sexy" and "Porn" categories are merged into a single NSFW class for binary classification.
-- **Source:** Hugging Face
+- **Description :** Dataset multi-classes (Sexy, Porn, Neutral). Les catégories "Sexy" et "Porn" sont fusionnées en une seule classe NSFW pour la classification binaire.
+- **Source :** Hugging Face
 
 ### Yahoo NSFW as MobileNetV2 Bottlenecks
 
-- **Description:** Pre-computed model outputs on thousands of NSFW images. Suitable for accelerated transfer learning on MobileNet architectures.
-- **Source:** Kaggle
+- **Description :** Sorties pré-calculées de modèles sur des milliers d'images NSFW. Adapté au transfer learning accéléré sur architectures MobileNet.
+- **Source :** Kaggle
 
 ---
 
-## 3. Training Methodology
+## 3. Méthodologie d'entrainement
 
-### Phase 1: Dataset Balancing (50/50 Rule)
+### Phase 1 : Équilibrage du dataset (règle du 50/50)
 
-The training directory must enforce strict demographic parity:
+Le répertoire d'entrainement doit imposer une parité démographique stricte :
 
 ```text
 dataset/
 ├── train/
-│   ├── SFW/   50% general-population images + 50% FairFace/CasualConversations (dark skin tones)
-│   └── NSFW/  Hugging Face datasets + ColorJitter augmentation (artificial darkening)
+│   ├── SFW/   50% images population générale + 50% FairFace/CasualConversations (peaux foncées)
+│   └── NSFW/  Datasets Hugging Face + augmentation ColorJitter (assombrissement artificiel)
 ```
 
-This structure forces the network to learn structural features of nudity independently of skin color.
+Cette structure force le réseau à apprendre les caractéristiques structurelles de la nudité indépendamment de la couleur de peau.
 
-### Phase 2: Hard Negative Mining
+### Phase 2 : Hard Negative Mining
 
-After initial training, the model is iteratively refined through targeted retraining:
+Après l'entrainement initial, le modèle est affiné itérativement par ré-entrainement ciblé :
 
-1. Identify false positive cases (e.g., a shirtless user in a dark room incorrectly flagged as NSFW).
-2. Add these images to the SFW partition with correct labels.
-3. Retrain the model on the augmented dataset.
+1. Identifier les cas de faux positifs (ex : un utilisateur torse nu dans une pièce sombre incorrectement flaggé NSFW).
+2. Ajouter ces images dans la partition SFW avec les labels corrects.
+3. Ré-entrainer le modèle sur le dataset augmenté.
 
-This iterative process, repeated over 2-3 cycles with locally representative imagery, produces a classifier that is both lightweight and contextually adapted to the Echo user demographic.
+Ce processus itératif, répété sur 2 à 3 cycles avec des images localement représentatives, produit un classifieur à la fois léger et contextuellement adapté à la démographie des utilisateurs d'Echo.
 
 ---
 
-## 4. Dataset Sources
+## 4. Sources des datasets
 
 | Dataset | URL |
 |:--------|:----|

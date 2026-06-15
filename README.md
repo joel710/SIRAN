@@ -1,118 +1,99 @@
-
----
-
-
 # Siran
 
-Advanced, ultra-lightweight on-device computer vision engine purpose-built for real-time NSFW detection and non-consensual explicit content prevention.
+Moteur de vision par ordinateur ultra-léger, concu pour la détection NSFW en temps réel et la prévention de contenu explicite non consenti, directement sur l'appareil.
 
-## Overview
+## Apercu
 
-Siran is the core content moderation subsystem developed for the Echo social network. Engineered specifically for high-efficiency deployment in resource-constrained environments, it utilizes an optimized MobileNetV3 architecture to intercept and analyze explicit imagery before server ingestion. 
+Siran est le sous-système de modération de contenu développé pour le réseau social **Echo**. Concu pour un déploiement haute performance dans des environnements à ressources limitées, il utilise une architecture MobileNetV3 optimisée pour intercepter et analyser les images explicites avant leur ingestion serveur.
 
-A primary engineering objective of Siran is demographic equity. Through targeted dataset balancing and aggressive color-space augmentation, the model mitigates historical algorithmic biases associated with dark skin tones, ensuring uniform precision across diverse human phenotypes.
+Un objectif principal de Siran est l'équité démographique. Par un équilibrage ciblé des datasets et une augmentation agressive de l'espace colorimétrique, le modèle corrige les biais algorithmiques historiques associés aux peaux foncées, garantissant une précision uniforme sur l'ensemble des phénotypes humains.
 
-### Key Architectural Pillars
+### Piliers architecturaux
 
-*   **Zero-Latency On-Device Inference:** Quantized execution profile designed to run client-side within mobile applications without blocking the main UI thread.
-*   **Ethical Data Augmentation:** Fine-tuned to dissociate melanin density from structural nudity, eliminating false-positive triggers common in standard open-source models.
-*   **Privacy-First Design:** Content processing occurs locally within the application sandbox. Zero image data is transmitted to third-party APIs or external validation servers.
+* **Inférence on-device sans latence :** Profil d'exécution quantifié concu pour tourner côté client dans les applications mobiles sans bloquer le thread UI principal.
+* **Augmentation éthique des données :** Entrainé pour dissocier la densité de mélanine de la nudité structurelle, éliminant les faux positifs courants dans les modèles open-source standards.
+* **Conception privacy-first :** Le traitement du contenu s'effectue localement dans le sandbox de l'application. Aucune donnée image n'est transmise à des API tierces.
 
 ---
 
-## Technical Specifications
+## Spécifications techniques
 
-The engine leverages a customized MobileNetV3-Small backbone, stripping the standard ImageNet classification head and replacing it with a specialized binary classification topology.
+Le moteur repose sur un backbone MobileNetV3-Small personnalisé, dont la tête de classification ImageNet standard est remplacée par une topologie de classification binaire spécialisée.
 
-| Metric | Specification |
+| Métrique | Spécification |
 | :--- | :--- |
-| **Model Architecture** | MobileNetV3-Small (Modified) |
-| **Input Tensor Dimension** | 224 x 224 x 3 (RGB) |
-| **Disk Footprint (INT8 Quantized)** | ~3.4 MB |
-| **Memory Footprint (RAM)** | < 12 MB during active inference |
-| **Average Inference Speed (CPU)** | ~15ms (Mid-range ARMv8 architecture) |
-| **Target Framework** | TensorFlow Lite / ONNX Mobile Runtime |
+| **Architecture** | MobileNetV3-Small (modifié) |
+| **Dimension du tenseur d'entrée** | 224 x 224 x 3 (RGB) |
+| **Taille sur disque (INT8 quantifié)** | ~3.4 Mo |
+| **Empreinte mémoire (RAM)** | < 12 Mo en inférence active |
+| **Vitesse d'inférence moyenne (CPU)** | ~15ms (ARMv8 milieu de gamme) |
+| **Framework cible** | TensorFlow Lite / ONNX Mobile Runtime |
 
 ---
 
-## Mitigating Demographic Bias
+## Correction du biais démographique
 
-Standard public NSFW datasets exhibit significant skew toward Western demographic distributions. When deployed in African ecosystems, these models frequently generate false positives due to a failure to distinguish between shadow gradients, high-contrast environments, and actual skin exposure.
+Les datasets NSFW publics standards présentent un biais significatif vers les distributions démographiques occidentales. Déployés dans des écosystèmes africains, ces modèles génèrent fréquemment des faux positifs par incapacité à distinguer les gradients d'ombre, les environnements à fort contraste, et l'exposition réelle de peau.
 
-SIRAN resolves this through a two-pronged training methodology:
+SIRAN résout ce problème par une méthodologie d'entrainement en deux volets :
 
-1.  **Phenotypic Stratification:** Integration of the FairFace and Casual Conversations v2 datasets into the Safe-For-Work (SFW) training partition, forcing the network to learn diverse facial and anatomical representations under varying ambient lighting conditions.
-2.  **Color Jittering & Stochastic Grayscale:** During the optimization phase, images undergo random brightness ($[0.6, 1.4]$), contrast ($[0.6, 1.4]$), and saturation ($[0.8, 1.2]$) modulations, alongside a 20% probability of complete serialization to grayscale. This teaches the convolutional layers to prioritize structural geometry, edge boundaries, and contextual textures over absolute color space values.
+1. **Stratification phénotypique :** Intégration des datasets FairFace et Casual Conversations v2 dans la partition SFW (Safe-For-Work), forcant le réseau à apprendre des représentations faciales et anatomiques diversifiées sous des conditions d'éclairage variées.
+2. **Color Jittering & Grayscale stochastique :** Durant la phase d'optimisation, les images subissent des modulations aléatoires de luminosité ($[0.6, 1.4]$), contraste ($[0.6, 1.4]$) et saturation ($[0.8, 1.2]$), ainsi qu'une probabilité de 20% de conversion complète en niveaux de gris. Cela enseigne aux couches convolutives à prioriser la géométrie structurelle et les textures contextuelles plutôt que les valeurs absolues de l'espace colorimétrique.
 
 ---
 
-## Repository Structure
+## Structure du dépôt
 
 ```text
 SIRAN/
 ├── .github/
-│   └── workflows/              # CI/CD pipeline definitions
+│   └── workflows/              # Pipelines CI/CD
 ├── core/
 │   ├── __init__.py
-│   ├── model.py                # MobileNetV3-Small with binary classification head
-│   ├── transforms.py           # Bias-mitigation augmentation (ColorJitter, grayscale)
-│   └── train.py                # Full training loop (BCEWithLogits, AdamW, CosineAnnealing)
+│   ├── model.py                # MobileNetV3-Small avec tête de classification binaire
+│   ├── transforms.py           # Augmentations anti-biais (ColorJitter, grayscale)
+│   └── train.py                # Boucle d'entrainement (BCEWithLogits, AdamW, CosineAnnealing)
 ├── dataset/
 │   ├── __init__.py
-│   └── prepare.py              # Raw image ingestion, train/val split, directory structuring
+│   └── prepare.py              # Ingestion d'images, split train/val, structuration
 ├── export/
 │   ├── __init__.py
-│   └── convert_to_tflite.py    # PyTorch → ONNX → INT8 quantized TFLite conversion
+│   └── convert_to_tflite.py    # Conversion PyTorch → ONNX → TFLite quantifié INT8
 ├── tests/
 │   ├── __init__.py
-│   ├── test_model.py           # Model output shape and range validation
-│   └── test_transforms.py      # Augmentation pipeline correctness tests
+│   ├── test_model.py           # Validation forme et range des sorties du modèle
+│   └── test_transforms.py      # Tests de la pipeline d'augmentation
 ├── .gitignore
-├── requirements.txt            # Python dependency manifest
-├── info.md                     # Training data strategy & bias mitigation reference
+├── requirements.txt            # Dépendances Python
+├── info.md                     # Stratégie de données et référence anti-biais
 └── README.md
 ```
 
 ---
 
-## Getting Started
+## Démarrage rapide
 
-### Prerequisites
+### Prérequis
 
-* Python 3.10 or higher
+* Python 3.10 ou supérieur
 * PyTorch 2.0+
-* CUDA Toolkit (Optional, for accelerated training)
+* CUDA Toolkit (optionnel, pour l'entrainement accéléré)
 
 ### Installation
 
-Clone the repository and install the required dependencies within a virtual environment:
+Cloner le dépôt et installer les dépendances dans un environnement virtuel :
 
 ```bash
-git clone [https://github.com/your-organization/Siran.git](https://github.com/your-organization/Siran.git)
+git clone https://github.com/your-organization/Siran.git
 cd Siran
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-
 ```
 
-### Model Fine-Tuning
+### Préparation du dataset
 
-To execute the bias-mitigated training pipeline:
-
-```bash
-python core/train.py \
-  --dataset_path ./data/processed \
-  --epochs 10 \
-  --batch_size 32 \
-  --lr 0.001 \
-  --output_dir ./models/checkpoints
-
-```
-
-### Dataset Preparation
-
-Structure raw images into a train/val split:
+Structurer les images brutes en split train/val :
 
 ```bash
 python dataset/prepare.py \
@@ -121,9 +102,22 @@ python dataset/prepare.py \
   --val_ratio 0.15
 ```
 
-### Export and Quantization
+### Entrainement du modèle
 
-Export to ONNX with INT8 quantization:
+Lancer la pipeline d'entrainement avec correction de biais :
+
+```bash
+python core/train.py \
+  --dataset_path ./data/processed \
+  --epochs 10 \
+  --batch_size 32 \
+  --lr 0.001 \
+  --output_dir ./models/checkpoints
+```
+
+### Export et quantification
+
+Export ONNX avec quantification INT8 :
 
 ```bash
 python export/convert_to_tflite.py \
@@ -133,7 +127,7 @@ python export/convert_to_tflite.py \
   --output ./export/siran_v1
 ```
 
-Or convert to TFLite for mobile deployment:
+Conversion TFLite pour déploiement mobile :
 
 ```bash
 python export/convert_to_tflite.py \
@@ -144,22 +138,20 @@ python export/convert_to_tflite.py \
 
 ---
 
-## Deployment Strategy
+## Stratégie de déploiement
 
-The generated `.tflite` file is designed to be fetched dynamically by the client application during background synchronization sequences. This minimizes initial application binary overhead while ensuring local storage persistence.
+Le fichier `.tflite` généré est concu pour être téléchargé dynamiquement par l'application cliente lors de séquences de synchronisation en arrière-plan. Cela minimise la taille initiale du binaire tout en assurant la persistance locale du modèle.
 
-### Integration Fallback Matrix
+### Matrice de fallback
 
 ```
-[Image Selected] ──► [Is SIRAN Local?] ──► YES ──► Local Inference (Zero Cost)
-                           │
-                           └──► NO ──► Secure API Ingestion ──► Async Model Download
-
+[Image sélectionnée] ──► [SIRAN local ?] ──► OUI ──► Inférence locale (coût zéro)
+                                │
+                                └──► NON ──► Ingestion API sécurisée ──► Téléchargement async du modèle
 ```
 
 ---
 
+## Licence
 
-## License
-
-This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
+Ce projet est distribué sous licence Apache 2.0 - voir le fichier LICENSE pour plus de détails.
