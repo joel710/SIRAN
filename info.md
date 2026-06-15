@@ -1,74 +1,90 @@
-Pour corriger drastiquement ce biais et rendre ton MobileNetV3 ultra-performant sur les peaux noires, tu dois adopter une approche combinée : utiliser un gros dataset NSFW open-source généraliste pour lui apprendre les concepts de base de la nudité, et y injecter un dataset ciblé sur la diversité des tons de peau.
+# SIRAN - Training Data Strategy & Bias Mitigation Reference
 
-Voici les meilleurs datasets et ressources disponibles pour accomplir cela.
+## Objective
 
----
+Correct demographic bias in the MobileNetV3 classifier to ensure uniform detection accuracy across all skin tones, with particular emphasis on dark-skinned populations representative of the Echo user base in West Africa.
 
-## 1. Les Datasets pour la Diversité des Peaux (Éviter les biais)
-
-Ce sont ces datasets qui vont "sauver" ton modèle des faux positifs/négatifs en Afrique. Tu vas les utiliser principalement pour la catégorie **SFW (Safe For Work)** et pour équilibrer la détection des visages, des bras, et des mains.
-
-* **Casual Conversations v2 (par Meta AI) :** * **C'est quoi ?** Un dataset massif créé spécifiquement pour corriger les biais de l'IA. Il contient des vidéos et images de personnes de toutes origines géographiques, avec une annotation très précise des types de peau selon l'échelle de Fitzpatrick (les tons foncés y sont massivement représentés).
-* **Où le trouver ?** Disponible en open-source sur le site de Meta AI Research ou via leur GitHub.
-
-
-* **FairFace Dataset (Hugging Face / GitHub) :**
-* **C'est quoi ?** Un dataset d'images de visages explicitement équilibré pour la diversité ethnique (Black, White, Latino, Asian, Indian, Middle Eastern).
-* **Pourquoi pour Echo ?** Idéal pour apprendre à MobileNetV3 que voir un visage ou un cou de couleur noire dans un environnement sombre (une chambre la nuit, par exemple) est totalement **SFW**.
-
-
-* **The Diversity in Faces (DiF) Dataset (par IBM) :**
-* **C'est quoi ?** Un dataset de millions d'images axé sur la diversité des traits humains et de la mélanine.
-
-
+The approach combines a large-scale generalist NSFW dataset for foundational nudity detection with targeted diversity datasets to eliminate false positives correlated with melanin density.
 
 ---
 
-## 2. Les Datasets pour le Côté Explicite (NSFW)
+## 1. Diversity Datasets (Bias Correction)
 
-Pour la partie nuditépure, ces datasets open-source te fourniront la base technique (formes, zones anatomiques, poses) :
+These datasets serve to calibrate the model's Safe-For-Work (SFW) boundary, ensuring that dark skin tones, low-light environments, and high-contrast shadows are not erroneously classified as explicit content.
 
-* **`deepghs/nsfw_detect` (sur Hugging Face Datasets) :** Un dataset de classification d'images très populaire et mis à jour, idéal pour le fine-tuning direct.
-* **`DarkyMan/nsfw-image-classification` (sur Hugging Face) :** Un autre projet bien structuré qui sépare les images en plusieurs classes (Sexy, Porn, Neutral). Tu peux fusionner "Sexy" et "Porn" pour ta détection binaire sur Echo.
-* **Yahoo NSFW Bottlenecks (sur Kaggle) :** Si tu veux aller encore plus vite, ce dataset contient les sorties pré-calculées de modèles sur des milliers d'images NSFW. C'est parfait pour du transfert learning ultra-rapide sur MobileNet.
+### Casual Conversations v2 (Meta AI)
+
+- **Description:** Large-scale dataset created specifically for AI bias correction. Contains video and image data of individuals across all geographic origins, annotated with Fitzpatrick skin type classifications. Dark skin tones are heavily represented.
+- **Source:** Meta AI Research (open-source)
+
+### FairFace Dataset
+
+- **Description:** Face image dataset explicitly balanced for ethnic diversity (Black, White, Latino, Asian, Indian, Middle Eastern).
+- **Application:** Trains the classifier to recognize that dark-skinned faces and necks in low-light environments (e.g., dimly lit rooms) constitute safe content.
+- **Source:** Hugging Face / GitHub
+
+### Diversity in Faces (DiF) Dataset (IBM)
+
+- **Description:** Multi-million image dataset focused on diversity of human traits and melanin distribution.
+- **Source:** IBM Research
 
 ---
 
-## 3. La Recette pour un Entraînement Drastiquement Amélioré
+## 2. Explicit Content Datasets (NSFW)
 
-Pour réussir ton coup, ne mets pas tout dans un seul bloc. Divise ton entraînement en deux phases bien distinctes.
+These datasets provide the foundational training signal for anatomical nudity detection: body geometry, exposed anatomical regions, and pose classification.
 
-### Phase 1 : L'équilibrage du Dataset (La règle du 50/50)
+### deepghs/nsfw_detect
 
-Quand tu crées ton dossier d'entraînement, applique cette structure stricte :
+- **Description:** Actively maintained image classification dataset suitable for direct fine-tuning.
+- **Source:** Hugging Face Datasets
+
+### DarkyMan/nsfw-image-classification
+
+- **Description:** Multi-class image dataset (Sexy, Porn, Neutral). The "Sexy" and "Porn" categories are merged into a single NSFW class for binary classification.
+- **Source:** Hugging Face
+
+### Yahoo NSFW as MobileNetV2 Bottlenecks
+
+- **Description:** Pre-computed model outputs on thousands of NSFW images. Suitable for accelerated transfer learning on MobileNet architectures.
+- **Source:** Kaggle
+
+---
+
+## 3. Training Methodology
+
+### Phase 1: Dataset Balancing (50/50 Rule)
+
+The training directory must enforce strict demographic parity:
 
 ```text
 dataset/
 ├── train/
-│   ├── SFW/  <-- 50% d'images occidentales (Kaggle) + 50% d'images du dataset FairFace/CasualConversations (Peaux noires)
-│   └── NSFW/ <-- Images Hugging Face + application automatique du script ColorJitter (pour assombrir artificiellement)
-
+│   ├── SFW/   50% general-population images + 50% FairFace/CasualConversations (dark skin tones)
+│   └── NSFW/  Hugging Face datasets + ColorJitter augmentation (artificial darkening)
 ```
 
-### Phase 2 : Le Hard Negative Mining (L'arme secrète)
+This structure forces the network to learn structural features of nudity independently of skin color.
 
-Une fois ton premier modèle MobileNetV3 entraîné, tu vas remarquer ses faiblesses. S'il bloque la photo d'un utilisateur togolais simplement parce qu'il est torse nu (sans aucune nudité explicite) ou parce que l'éclairage de sa chambre crée des ombres de peau :
+### Phase 2: Hard Negative Mining
 
-1. Récupère cette image (ou des images similaires).
-2. Ajoute-les manuellement dans ton dossier **`SFW`**.
-3. Réentraîne le modèle (on appelle ça le *Hard Negative Mining*).
+After initial training, the model is iteratively refined through targeted retraining:
 
-En répétant cela une ou deux fois avec des photos typiques de la vie locale, ton MobileNetV3 deviendra une barrière ultra-légère, redoutablement précise et parfaitement adaptée à la communauté d'Echo à Lomé.
+1. Identify false positive cases (e.g., a shirtless user in a dark room incorrectly flagged as NSFW).
+2. Add these images to the SFW partition with correct labels.
+3. Retrain the model on the augmented dataset.
 
-lien:
-deepghs/nsfw_detect : https://huggingface.co/datasets/deepghs/nsfw_detect/tree/main?not-for-all-audiences=true
+This iterative process, repeated over 2-3 cycles with locally representative imagery, produces a classifier that is both lightweight and contextually adapted to the Echo user demographic.
 
-Casual Conversations v2 Dataset : https://ai.meta.com/datasets/casual-conversations-v2-dataset/
+---
 
-HuggingFaceM4/FairFace : https://huggingface.co/datasets/HuggingFaceM4/FairFace
+## 4. Dataset Sources
 
-IBM Diversity in Faces Dataset : https://www.research.ibm.com/artificial-intelligence/trusted-ai/diversity-in-faces/
-
-DarkyMan/nsfw-image-classification : https://huggingface.co/datasets/DarkyMan/nsfw-image-classification
-
-Yahoo NSFW as MobileNetV2 Bottlenecks : https://www.kaggle.com/datasets/nmurray1234/yahoo-nsfw-as-mobilenetv2-bottlenecks
+| Dataset | URL |
+|:--------|:----|
+| deepghs/nsfw_detect | https://huggingface.co/datasets/deepghs/nsfw_detect |
+| Casual Conversations v2 | https://ai.meta.com/datasets/casual-conversations-v2-dataset/ |
+| HuggingFaceM4/FairFace | https://huggingface.co/datasets/HuggingFaceM4/FairFace |
+| IBM Diversity in Faces | https://www.research.ibm.com/artificial-intelligence/trusted-ai/diversity-in-faces/ |
+| DarkyMan/nsfw-image-classification | https://huggingface.co/datasets/DarkyMan/nsfw-image-classification |
+| Yahoo NSFW Bottlenecks | https://www.kaggle.com/datasets/nmurray1234/yahoo-nsfw-as-mobilenetv2-bottlenecks |
