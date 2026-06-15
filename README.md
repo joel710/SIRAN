@@ -49,15 +49,28 @@ SIRAN resolves this through a two-pronged training methodology:
 ## Repository Structure
 
 ```text
-├── .github/                # CI/CD workflows and issue templates
-├── core/                   # Model definition and architecture scripts
-│   ├── model.py            # Modified MobileNetV3 PyTorch definition
-│   └── transforms.py       # Bias-mitigation data augmentation pipeline
-├── dataset/                # Dataset ingestion and preprocessing utilities
-├── export/                 # TFLite/ONNX conversion and quantization scripts
-├── tests/                  # Unit testing and bias-evaluation suites
-└── requirements.txt        # Python dependency manifest
-
+SIRAN/
+├── .github/
+│   └── workflows/              # CI/CD pipeline definitions
+├── core/
+│   ├── __init__.py
+│   ├── model.py                # MobileNetV3-Small with binary classification head
+│   ├── transforms.py           # Bias-mitigation augmentation (ColorJitter, grayscale)
+│   └── train.py                # Full training loop (BCEWithLogits, AdamW, CosineAnnealing)
+├── dataset/
+│   ├── __init__.py
+│   └── prepare.py              # Raw image ingestion, train/val split, directory structuring
+├── export/
+│   ├── __init__.py
+│   └── convert_to_tflite.py    # PyTorch → ONNX → INT8 quantized TFLite conversion
+├── tests/
+│   ├── __init__.py
+│   ├── test_model.py           # Model output shape and range validation
+│   └── test_transforms.py      # Augmentation pipeline correctness tests
+├── .gitignore
+├── requirements.txt            # Python dependency manifest
+├── info.md                     # Training data strategy & bias mitigation reference
+└── README.md
 ```
 
 ---
@@ -97,16 +110,36 @@ python core/train.py \
 
 ```
 
+### Dataset Preparation
+
+Structure raw images into a train/val split:
+
+```bash
+python dataset/prepare.py \
+  --input_dir ./data/raw \
+  --output_dir ./data/processed \
+  --val_ratio 0.15
+```
+
 ### Export and Quantization
 
-To compile the trained PyTorch weights into an optimized, 8-bit quantized TensorFlow Lite format for mobile deployment:
+Export to ONNX with INT8 quantization:
 
 ```bash
 python export/convert_to_tflite.py \
   --checkpoint ./models/checkpoints/best_model.pt \
-  --optimize size \
-  --output ./export/Siran_v1.tflite
+  --format onnx \
+  --quantize \
+  --output ./export/siran_v1
+```
 
+Or convert to TFLite for mobile deployment:
+
+```bash
+python export/convert_to_tflite.py \
+  --checkpoint ./models/checkpoints/best_model.pt \
+  --format tflite \
+  --output ./export/siran_v1
 ```
 
 ---
@@ -126,17 +159,7 @@ The generated `.tflite` file is designed to be fetched dynamically by the client
 
 ---
 
+
 ## License
 
 This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
-
-```
-
-
-<ElicitationsGroup message="Que souhaitez-vous faire maintenant ?">
-<Elicitation label="Générer le script Python d'entraînement complet" query="Fais le script python complet core/train.py avec la data augmentation colorjitter pour mobilenetv3" />
-<Elicitation label="Créer le script de conversion et quantification TFLite" query="Ecris le script export/convert_to_tflite.py pour quantifier le modele en INT8" />
-<Elicitation label="Rédiger le fichier LICENSE Apache 2.0" query="Genere le texte complet du fichier LICENSE Apache 2.0" />
-</ElicitationsGroup>
-
-
